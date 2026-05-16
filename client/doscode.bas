@@ -16,6 +16,7 @@ DECLARE SUB ExecuteLocalCommand (cmd$)
 DECLARE FUNCTION CurrentPath$ ()
 
 COMMON SHARED Running%, Model$, PortNum%
+COMMON SHARED SerialReady%, SerialError%
 
 Running% = -1
 Model$ = ENVIRON$("LLM_MODEL")
@@ -27,6 +28,11 @@ UIDrawFrame
 UISetStatus Model$, CurrentPath$
 UIAddLine "AI", "DOSCODE ready. Proxy expected on COM1. Press F1 for help."
 SerialOpen PortNum%
+IF SerialReady% = 0 THEN
+    UIAddLine "ERR", "Cannot open COM1. Check DOSBox serial config. ERR=" + LTRIM$(STR$(SerialError%))
+ELSE
+    UIAddLine "SYS", "Serial COM1 ready."
+END IF
 
 DO WHILE Running%
     prompt$ = ""

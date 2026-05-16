@@ -5,10 +5,11 @@ DECLARE SUB SerialOpen (portNum%)
 DECLARE SUB SerialSendPrompt (prompt$)
 DECLARE FUNCTION SerialReadLine$ ()
 
-COMMON SHARED SerialFile%, SerialReady%
+COMMON SHARED SerialFile%, SerialReady%, SerialError%
 
 SUB SerialOpen (portNum%)
     SerialFile% = FREEFILE
+    SerialError% = 0
     port$ = "COM" + LTRIM$(STR$(portNum%)) + ":9600,N,8,1,CS0,DS0,CD0,RS"
     ON ERROR GOTO SerialOpenError
     OPEN port$ FOR RANDOM AS #SerialFile%
@@ -16,6 +17,7 @@ SUB SerialOpen (portNum%)
     EXIT SUB
 SerialOpenError:
     SerialReady% = 0
+    SerialError% = ERR
     RESUME NEXT
 END SUB
 

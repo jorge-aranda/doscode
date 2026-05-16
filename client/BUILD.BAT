@@ -1,6 +1,8 @@
 @ECHO OFF
 REM DOSCODE QuickBasic 4.5 build script.
 REM Run inside DOS, FreeDOS, or DOSBox with QB45 BC.EXE and LINK.EXE in PATH.
+REM If LINK reports BCOM45.LIB missing, set LIB to your QB45 library path.
+REM Example: SET LIB=C:\QB45\LIB;%LIB%
 
 BC /O DOSCODE.BAS;
 BC /O UI.BAS;

@@ -1,0 +1,12 @@
+# Keep DOS-era source and script files compatible with QuickBasic and DOS tools.
+*.bas text eol=crlf
+*.BAS text eol=crlf
+*.bat text eol=crlf
+*.BAT text eol=crlf
+*.mak text eol=crlf
+*.MAK text eol=crlf
+
+# Keep modern tooling files with Unix line endings.
+*.py text eol=lf
+*.sh text eol=lf
+*.md text eol=lf

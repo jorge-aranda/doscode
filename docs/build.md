@@ -43,6 +43,7 @@ Requirements:
 
 - DOS, FreeDOS, or DOSBox
 - QuickBasic 4.5 compiler tools in `PATH`
+- QuickBasic 4.5 runtime libraries available through the DOS `LIB` variable
 - the `client/` directory copied or mounted inside DOS
 
 QuickBasic 4.5 is not included with MS-DOS, FreeDOS, or DOSBox. It is a
@@ -53,9 +54,50 @@ available in the DOS `PATH`:
 - `BC.EXE`, the QuickBasic compiler
 - `LINK.EXE`, the DOS linker
 
+The linker also needs the QuickBasic runtime library directory. In a typical
+QuickBasic 4.5 installation this directory contains `BCOM45.LIB`. If `LINK.EXE`
+prints this warning:
+
+```text
+LINK: warning L4051: BCOM45.LIB : cannot find library
+```
+
+then `LINK.EXE` is running, but it cannot find the QuickBasic runtime library.
+Set the DOS `LIB` environment variable to the directory where `BCOM45.LIB` is
+installed before running `BUILD.BAT`. Example:
+
+```bat
+SET PATH=C:\QB45;%PATH%
+SET LIB=C:\QB45\LIB;%LIB%
+```
+
+Some QuickBasic 4.5 installations place `BCOM45.LIB` directly in `C:\QB45`
+instead of `C:\QB45\LIB`. In that case use:
+
+```bat
+SET LIB=C:\QB45;%LIB%
+```
+
 The `QBASIC.EXE` interpreter included with some MS-DOS versions is useful for
 editing or running simple BASIC programs, but it is not enough to build the
 standalone `DOSCODE.EXE` produced by `client/BUILD.BAT`.
+
+The BASIC sources, batch files, and QuickBasic project file in `client/` are
+kept with DOS `CRLF` line endings. This is important because some DOS versions
+of QuickBasic do not parse Unix `LF` line endings correctly.
+
+For the QuickBasic IDE, `client/DOSCODE.MAK` lists the program modules:
+
+```text
+DOSCODE.BAS
+UI.BAS
+SERIAL.BAS
+PARSER.BAS
+FILES.BAS
+```
+
+Open that project file from QuickBasic when you want to run or inspect the
+multi-module client inside the IDE.
 
 Build:
 
