@@ -1,0 +1,52 @@
+# ==========================
+# JetBrains IDEs (IntelliJ, IDEA, PyCharm, WebStorm, etc.)
+# ==========================
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ==========================
+# VS Code
+# ==========================
+.vscode/
+*.code-workspace
+.history/
+
+# ==========================
+# Junie (JetBrains autonomous programmer) memory/config artifacts
+# ==========================
+# The .junie folder is used for session/config artifacts and should not be committed.
+.junie/
+
+# ==========================
+# OS & common editor cruft
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# QuickBASIC (DOS) compiled/build artifacts
+# ==========================
+# Common outputs from QB45/BC/LINK
+*.EXE
+*.exe
+*.COM
+*.com
+*.OBJ
+*.obj
+*.LIB
+*.lib
+*.MAP
+*.map
+# Quick Libraries used during linking
+*.QLB
+*.qlb
+
+# ==========================
+# Python compiled bytecode
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
