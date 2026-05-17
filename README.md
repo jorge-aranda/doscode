@@ -216,6 +216,22 @@ RUN.BAT
 
 See `docs/build.md` for DOSBox and serial-port notes.
 
+## Scripts
+
+Helper scripts for development and debugging live in `scripts/`.
+
+### scripts/monitor_serial.sh
+
+- Taps serial traffic between the proxy and DOSBox in real time using `socat`
+- Prints each frame to the terminal with a direction label
+- Saves logs to `/tmp/doscode_monitor/`
+- Requires `socat`
+    - macOS: `brew install socat`
+    - Debian/Ubuntu: `apt install socat`
+
+See [`docs/scripts.md`](docs/scripts.md) for full usage instructions, DOSBox
+configuration, and baud-rate alignment notes.
+
 ## Project layout
 
 ```text
@@ -232,9 +248,12 @@ proxy/
     llm.py
     protocol.py
     requirements.txt
+scripts/
+    monitor_serial.sh
 docs/
     protocol.md
     build.md
+    scripts.md
 README.md
 AGENTS.md
 LICENSE
