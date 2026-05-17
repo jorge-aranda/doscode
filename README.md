@@ -229,6 +229,12 @@ Helper scripts for development and debugging live in `scripts/`.
     - macOS: `brew install socat`
     - Debian/Ubuntu: `apt install socat`
 
+### scripts/link_dosbox_project.sh
+
+- Creates symlinks from a DOSBox-mounted directory to the `client/` source files
+- DOSBox always sees the latest version without manual copying
+- No external dependencies
+
 See [`docs/scripts.md`](docs/scripts.md) for full usage instructions, DOSBox
 configuration, and baud-rate alignment notes.
 
@@ -250,6 +256,7 @@ proxy/
     requirements.txt
 scripts/
     monitor_serial.sh
+    link_dosbox_project.sh
 docs/
     protocol.md
     build.md

@@ -2,6 +2,8 @@
 
 Helper scripts for development, debugging, and serial port monitoring.
 
+---
+
 ## scripts/monitor_serial.sh
 
 Taps the serial traffic between the Python proxy and the DOSBox client in real
@@ -97,3 +99,76 @@ MODE COM1:9600,N,8,1
 ```
 
 If the command returns no error, the port is active and connected.
+
+---
+
+## scripts/link_dosbox_project.sh
+
+Creates symlinks from a DOSBox-mounted directory back to the `client/` source
+files in the project tree. This lets DOSBox see the latest source files without
+copying them manually every time you edit them on the host.
+
+### Requirements
+
+No external dependencies beyond a POSIX shell and `ln`.
+
+### Usage
+
+```sh
+./scripts/link_dosbox_project.sh [TARGET_DIR]
+```
+
+| Argument     | Default                                              | Description                                      |
+|--------------|------------------------------------------------------|--------------------------------------------------|
+| `TARGET_DIR` | `~/vm-projects/dos-box-programs/apps/doscode`        | Subdirectory inside the DOSBox-mounted drive where links are created |
+
+The script iterates over every file directly inside `client/` and creates a
+symlink in `TARGET_DIR` pointing back to the original source file. It skips
+non-files (subdirectories) and any destination that already exists and is not a
+symlink.
+
+Output per file:
+
+- `LINK <dst> -> <src>` — symlink created.
+- `OK   <dst> -> <src>` — symlink already correct, nothing changed.
+- `SKIP <dst> exists and is not a symlink` — destination is a real file; left
+  untouched.
+
+### Typical workflow
+
+**Step 1 — Run the script once** from the project root:
+
+```sh
+./scripts/link_dosbox_project.sh
+```
+
+Or pass a custom target if your DOSBox mount point differs:
+
+```sh
+./scripts/link_dosbox_project.sh ~/dosbox/drives/c/doscode
+```
+
+**Step 2 — Configure DOSBox** to mount `TARGET_DIR` as drive `C:` (or any
+drive). Example `dosbox-staging.conf`:
+
+```ini
+[autoexec]
+mount c ~/vm-projects/dos-box-programs
+c:
+path=%PATH%;C:\apps\doscode
+```
+
+The DOSCODE files will be available at `C:\apps\doscode\` inside DOSBox.
+
+**Step 3 — Edit source files** on the host as normal. Because the files in
+`TARGET_DIR` are symlinks, DOSBox always sees the current version without any
+extra copy step.
+
+### Safety checks
+
+The script refuses to create links if `TARGET_DIR` is inside the project tree
+itself, to avoid accidental self-referential symlinks:
+
+```
+ERROR target must be outside the project tree: /path/to/project/client
+```
