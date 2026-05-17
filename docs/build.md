@@ -37,6 +37,69 @@ cd proxy
 LLM_PROVIDER=mock SERIAL_PORT=stdio python3 server.py
 ```
 
+## Proxy environment variables
+
+All proxy configuration is done through environment variables:
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `LLM_PROVIDER` | no | `mock` | Provider: `openai`, `openrouter`, `claude`, `ollama`, or `mock` |
+| `LLM_MODEL` | no | `gpt-5.5` | Model name passed to the provider |
+| `LLM_API_KEY` | see below | _(empty)_ | API key for cloud providers |
+| `LLM_BASE_URL` | no | _(provider default)_ | Override the provider API base URL |
+| `SERIAL_PORT` | no | _(none)_ | Serial device (e.g. `/dev/ttyUSB0`, `COM3`) or `stdio` for development |
+
+### API key requirements by provider
+
+| `LLM_PROVIDER` | API key needed | Where to get it |
+|---|---|---|
+| `openai` | yes | https://platform.openai.com/api-keys |
+| `openrouter` | yes | https://openrouter.ai/keys |
+| `claude` | yes | https://console.anthropic.com/settings/keys |
+| `ollama` | no | runs locally, no key needed |
+| `mock` | no | test mode, no network calls |
+
+### Examples
+
+OpenAI:
+
+```sh
+cd proxy
+LLM_PROVIDER=openai \
+LLM_MODEL=gpt-4o \
+LLM_API_KEY=sk-... \
+SERIAL_PORT=/dev/ttyUSB0 \
+python3 server.py
+```
+
+Claude:
+
+```sh
+cd proxy
+LLM_PROVIDER=claude \
+LLM_MODEL=claude-opus-4-5 \
+LLM_API_KEY=sk-ant-... \
+SERIAL_PORT=/dev/ttyUSB0 \
+python3 server.py
+```
+
+Ollama (local, no key):
+
+```sh
+cd proxy
+LLM_PROVIDER=ollama \
+LLM_MODEL=llama3 \
+SERIAL_PORT=/dev/ttyUSB0 \
+python3 server.py
+```
+
+Mock mode (no hardware, no key):
+
+```sh
+cd proxy
+LLM_PROVIDER=mock SERIAL_PORT=stdio python3 server.py
+```
+
 ## DOS client build
 
 Requirements:
