@@ -83,8 +83,11 @@ editing or running simple BASIC programs, but it is not enough to build the
 standalone `DOSCODE.EXE` produced by `client/BUILD.BAT`.
 
 The BASIC sources, batch files, and QuickBasic project file in `client/` are
-kept with DOS `CRLF` line endings. This is important because some DOS versions
-of QuickBasic do not parse Unix `LF` line endings correctly.
+kept as plain ASCII files with DOS `CRLF` line endings, no UTF-8 byte order
+mark, and a final DOS end-of-file marker (`Ctrl+Z`, byte `0x1A`). This is
+important because some DOS versions of QuickBasic do not parse Unix `LF` line
+endings, BOM prefixes, extended text encodings, or missing DOS EOF markers
+correctly.
 
 For the QuickBasic IDE, `client/DOSCODE.MAK` lists the program modules:
 

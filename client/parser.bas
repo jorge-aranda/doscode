@@ -7,10 +7,13 @@ DECLARE SUB ReadFileToChat (path$)
 DECLARE SUB WriteFileFromAction (path$, body$)
 DECLARE SUB RunDosCommand (cmd$)
 DECLARE SUB SerialSendPrompt (prompt$)
+DECLARE SUB StopProgram ()
+DECLARE SUB SetModel (newModel$)
 DECLARE FUNCTION ExtractPath$ (line$)
 
-COMMON SHARED Running%, Model$
-COMMON SHARED ActionMode$, ActionPath$, ActionBody$
+DIM SHARED ActionMode$
+DIM SHARED ActionPath$
+DIM SHARED ActionBody$
 
 SUB HandleServerLine (line$)
     IF line$ = "END" THEN EXIT SUB
@@ -78,7 +81,7 @@ SUB ExecuteLocalCommand (cmd$)
     ELSEIF c$ = "/clear" THEN
         UIClearChat
     ELSEIF c$ = "/exit" THEN
-        Running% = 0
+        StopProgram
     ELSEIF LEFT$(c$, 6) = "/read " THEN
         ReadFileToChat MID$(cmd$, 7)
     ELSEIF LEFT$(c$, 5) = "/run " THEN
@@ -88,8 +91,9 @@ SUB ExecuteLocalCommand (cmd$)
         LINE INPUT body$
         WriteFileFromAction MID$(cmd$, 8), body$
     ELSEIF LEFT$(c$, 7) = "/model " THEN
-        Model$ = MID$(cmd$, 8)
-        UIAddLine "SYS", "model set to " + Model$
+        newModel$ = MID$(cmd$, 8)
+        SetModel newModel$
+        UIAddLine "SYS", "model set to " + newModel$
     ELSEIF c$ = "/history" OR c$ = "/diff" OR c$ = "/undo" OR c$ = "/apply" THEN
         UIAddLine "SYS", "command reserved for next milestone"
     ELSEIF LEFT$(c$, 5) = "/fix " OR LEFT$(c$, 9) = "/explain " OR LEFT$(c$, 6) = "/plan " THEN
@@ -98,3 +102,4 @@ SUB ExecuteLocalCommand (cmd$)
         UIAddLine "ERR", "unknown command: " + cmd$
     END IF
 END SUB
+

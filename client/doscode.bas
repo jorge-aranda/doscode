@@ -11,12 +11,17 @@ DECLARE SUB UIHelp ()
 DECLARE SUB SerialOpen (portNum%)
 DECLARE SUB SerialSendPrompt (prompt$)
 DECLARE FUNCTION SerialReadLine$ ()
+DECLARE FUNCTION SerialIsReady% ()
+DECLARE FUNCTION SerialLastError% ()
 DECLARE SUB HandleServerLine (line$)
 DECLARE SUB ExecuteLocalCommand (cmd$)
 DECLARE FUNCTION CurrentPath$ ()
+DECLARE SUB StopProgram ()
+DECLARE SUB SetModel (newModel$)
 
-COMMON SHARED Running%, Model$, PortNum%
-COMMON SHARED SerialReady%, SerialError%
+DIM SHARED Running%
+DIM SHARED Model$
+DIM SHARED PortNum%
 
 Running% = -1
 Model$ = ENVIRON$("LLM_MODEL")
@@ -28,8 +33,8 @@ UIDrawFrame
 UISetStatus Model$, CurrentPath$
 UIAddLine "AI", "DOSCODE ready. Proxy expected on COM1. Press F1 for help."
 SerialOpen PortNum%
-IF SerialReady% = 0 THEN
-    UIAddLine "ERR", "Cannot open COM1. Check DOSBox serial config. ERR=" + LTRIM$(STR$(SerialError%))
+IF SerialIsReady% = 0 THEN
+    UIAddLine "ERR", "Cannot open COM1. Check DOSBox serial config. ERR=" + LTRIM$(STR$(SerialLastError%))
 ELSE
     UIAddLine "SYS", "Serial COM1 ready."
 END IF
@@ -54,7 +59,17 @@ DO WHILE Running%
     END IF
 LOOP
 
+SUB StopProgram ()
+    Running% = 0
+END SUB
+
+SUB SetModel (newModel$)
+    Model$ = newModel$
+    UISetStatus Model$, CurrentPath$
+END SUB
+
 COLOR 7, 0
 CLS
 PRINT "DOSCODE terminated."
 END
+

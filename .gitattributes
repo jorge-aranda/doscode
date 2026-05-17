@@ -1,4 +1,5 @@
 # Keep DOS-era source and script files compatible with QuickBasic and DOS tools.
+# These files must remain plain ASCII, use CRLF line endings, and end with Ctrl-Z.
 *.bas text eol=crlf
 *.BAS text eol=crlf
 *.bat text eol=crlf

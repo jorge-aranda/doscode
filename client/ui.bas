@@ -7,31 +7,40 @@ DECLARE SUB UIAddLine (kind$, text$)
 DECLARE SUB UIInput (prompt$)
 DECLARE SUB UIHelp ()
 DECLARE SUB UIClearChat ()
+DECLARE SUB UIInit ()
+DECLARE SUB UIScrollIfNeeded ()
 DECLARE FUNCTION KeyLine$ ()
 
-CONST C_NORMAL = 7
-CONST C_AI = 10
-CONST C_USER = 14
-CONST C_TITLE = 11
-CONST C_ERROR = 12
-CONST C_ACTION = 13
-CONST CHAT_TOP = 4
-CONST CHAT_BOTTOM = 21
-CONST INPUT_ROW = 23
+DIM SHARED CNormal%
+DIM SHARED CAI%
+DIM SHARED CUser%
+DIM SHARED CTitle%
+DIM SHARED CError%
+DIM SHARED CAction%
+DIM SHARED ChatTop%
+DIM SHARED ChatBottom%
+DIM SHARED InputRow%
+DIM SHARED ChatRow%
 
-COMMON SHARED ChatRow%
-COMMON SHARED Running%, Model$
-
-SUB UIInit
+SUB UIInit ()
+    CNormal% = 7
+    CAI% = 10
+    CUser% = 14
+    CTitle% = 11
+    CError% = 12
+    CAction% = 13
+    ChatTop% = 4
+    ChatBottom% = 21
+    InputRow% = 23
     SCREEN 0
     WIDTH 80, 25
-    COLOR C_NORMAL, 0
+    COLOR CNormal%, 0
     CLS
-    ChatRow% = CHAT_TOP
+    ChatRow% = ChatTop%
 END SUB
 
-SUB UIDrawFrame
-    COLOR C_TITLE, 0
+SUB UIDrawFrame ()
+    COLOR CTitle%, 0
     CLS
     LOCATE 1, 1: PRINT CHR$(218); STRING$(2, CHR$(196)); " DOSCODE "; STRING$(66, CHR$(196)); CHR$(191);
     LOCATE 2, 1: PRINT CHR$(179); SPACE$(78); CHR$(179);
@@ -43,28 +52,38 @@ SUB UIDrawFrame
     LOCATE 23, 1: PRINT CHR$(179); SPACE$(78); CHR$(179);
     LOCATE 24, 1: PRINT CHR$(179); " F1 Help  F2 Files  F3 Retry  F4 Clear  F5 Model  TAB Commands           "; CHR$(179);
     LOCATE 25, 1: PRINT CHR$(192); STRING$(78, CHR$(196)); CHR$(217);
-    ChatRow% = CHAT_TOP
+    ChatRow% = ChatTop%
 END SUB
 
 SUB UISetStatus (model$, path$)
-    COLOR C_NORMAL, 0
+    COLOR CNormal%, 0
     LOCATE 2, 3
     PRINT "model: "; model$; SPACE$(18 - LEN(model$)); " path: "; LEFT$(path$, 36); SPACE$(20);
 END SUB
 
-SUB UIScrollIfNeeded
-    IF ChatRow% > CHAT_BOTTOM THEN
-        FOR r% = CHAT_TOP TO CHAT_BOTTOM
+SUB UIScrollIfNeeded ()
+    IF ChatRow% > ChatBottom% THEN
+        FOR r% = ChatTop% TO ChatBottom%
             LOCATE r%, 2: PRINT SPACE$(78);
         NEXT r%
-        ChatRow% = CHAT_TOP
+        ChatRow% = ChatTop%
         UIAddLine "SYS", "-- screen cleared for RAM-friendly scroll --"
     END IF
 END SUB
 
 SUB UIAddLine (kind$, text$)
     CALL UIScrollIfNeeded
-    IF kind$ = "AI" THEN COLOR C_AI, 0 ELSE IF kind$ = "YOU" THEN COLOR C_USER, 0 ELSE IF kind$ = "ERR" THEN COLOR C_ERROR, 0 ELSE IF kind$ = "ACT" THEN COLOR C_ACTION, 0 ELSE COLOR C_NORMAL, 0
+    IF kind$ = "AI" THEN
+        COLOR CAI%, 0
+    ELSEIF kind$ = "YOU" THEN
+        COLOR CUser%, 0
+    ELSEIF kind$ = "ERR" THEN
+        COLOR CError%, 0
+    ELSEIF kind$ = "ACT" THEN
+        COLOR CAction%, 0
+    ELSE
+        COLOR CNormal%, 0
+    END IF
     LOCATE ChatRow%, 3
     IF kind$ = "YOU" THEN
         PRINT "You > "; LEFT$(text$, 70);
@@ -79,13 +98,13 @@ SUB UIAddLine (kind$, text$)
 END SUB
 
 SUB UIInput (prompt$)
-    COLOR C_NORMAL, 0
-    LOCATE INPUT_ROW, 2: PRINT SPACE$(78);
-    LOCATE INPUT_ROW, 3: PRINT "> ";
+    COLOR CNormal%, 0
+    LOCATE InputRow%, 2: PRINT SPACE$(78);
+    LOCATE InputRow%, 3: PRINT "> ";
     prompt$ = KeyLine$
 END SUB
 
-FUNCTION KeyLine$
+FUNCTION KeyLine$ ()
     line$ = ""
     DO
         k$ = INKEY$
@@ -99,8 +118,8 @@ FUNCTION KeyLine$
             ELSEIF ASC(k$) = 8 THEN
                 IF LEN(line$) > 0 THEN
                     line$ = LEFT$(line$, LEN(line$) - 1)
-                    LOCATE INPUT_ROW, 5 + LEN(line$): PRINT " ";
-                    LOCATE INPUT_ROW, 5 + LEN(line$)
+                    LOCATE InputRow%, 5 + LEN(line$): PRINT " ";
+                    LOCATE InputRow%, 5 + LEN(line$)
                 END IF
             ELSEIF ASC(k$) >= 32 THEN
                 IF LEN(line$) < 72 THEN
@@ -113,13 +132,14 @@ FUNCTION KeyLine$
     KeyLine$ = line$
 END FUNCTION
 
-SUB UIHelp
+SUB UIHelp ()
     UIAddLine "SYS", "/help /clear /history /model /exit /read /write /run /fix /explain /plan /apply /diff /undo"
 END SUB
 
-SUB UIClearChat
-    FOR r% = CHAT_TOP TO CHAT_BOTTOM
+SUB UIClearChat ()
+    FOR r% = ChatTop% TO ChatBottom%
         LOCATE r%, 2: PRINT SPACE$(78);
     NEXT r%
-    ChatRow% = CHAT_TOP
+    ChatRow% = ChatTop%
 END SUB
+
