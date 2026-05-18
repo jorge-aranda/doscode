@@ -73,8 +73,9 @@ def serve(input_stream: TextIO, output_stream: TextIO) -> None:
             break
         if not prompt.text:
             continue
-        lines = llm.stream(prompt.text)
-        stream_response(lines, output_stream)
+        lines = list(llm.stream(prompt.text))
+        print(f"[llm] {lines}", file=sys.stderr, flush=True)
+        stream_response(iter(lines), output_stream)
 
 
 def main() -> int:
