@@ -77,7 +77,7 @@ The client targets an 80x25 text screen:
 
 ```text
 ┌ DOSCODE ───────────────────────────────────────────────────────────────────┐
-│ model: gpt-5.5        path: C:\WORK                                      │
+│ model: claude-3-5-haiku   path: C:\WORK                                   │
 ├────────────────────────────────────────────────────────────────────────────┤
 │ AI  > DOSCODE ready. Proxy expected on COM1. Press F1 for help.           │
 │ You > fix BUILD.BAT                                                       │
@@ -183,12 +183,15 @@ Environment variables:
 
 ```text
 LLM_PROVIDER=openai|claude|openrouter|ollama|mock
-LLM_MODEL=gpt-5.5
+LLM_MODEL=claude-3-5-haiku-20241022
 LLM_API_KEY=your-api-key
 LLM_BASE_URL=optional-compatible-base-url
-SERIAL_PORT=/dev/ttyUSB0 or COM3 or stdio
+SERIAL_PORT=/dev/ttyUSB0 or COM3 or stdio or /tmp/pty_proxy
 SERIAL_BAUD=9600
 ```
+
+If `LLM_MODEL` is not set, the proxy picks a sensible per-provider default
+(e.g. `claude-3-5-haiku-20241022` for `claude`, `gpt-4o-mini` for `openai`).
 
 For local development without serial hardware, use the mock provider and stdio:
 
@@ -204,6 +207,33 @@ PROMPT 15
 /read BUILD.BAT
 ```
 
+### Running with DOSBox on macOS / Linux
+
+DOSBox cannot open an arbitrary host PTY through `directserial realport:`.
+The validated setup uses `socat` to bridge a PTY to a TCP port and configures
+DOSBox as a `nullmodem` TCP client:
+
+```sh
+# Terminal 1 — PTY <-> TCP bridge
+socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &
+
+# Terminal 2 — proxy talks to the PTY
+cd proxy
+python3 server.py --serial-port /tmp/pty_proxy --baud 9600
+```
+
+In `dosbox.conf`:
+
+```ini
+[serial]
+serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100
+serial2=dummy
+```
+
+The DOS client then talks to the proxy through `COM1`. See `docs/build.md`
+for details and `docs/scripts.md` for `monitor_serial.sh`, which can tap the
+traffic between DOSBox and the proxy.
+
 ## Building the DOS client
 
 Inside DOS, FreeDOS, or DOSBox with QuickBasic tools in `PATH`:
@@ -215,6 +245,28 @@ RUN.BAT
 ```
 
 See `docs/build.md` for DOSBox and serial-port notes.
+
+## Scripts
+
+Helper scripts for development and debugging live in `scripts/`.
+
+### scripts/monitor_serial.sh
+
+- Taps serial traffic between the proxy and DOSBox in real time using `socat`
+- Prints each frame to the terminal with a direction label
+- Saves logs to `/tmp/doscode_monitor/`
+- Requires `socat`
+    - macOS: `brew install socat`
+    - Debian/Ubuntu: `apt install socat`
+
+### scripts/link_dosbox_project.sh
+
+- Creates symlinks from a DOSBox-mounted directory to the `client/` source files
+- DOSBox always sees the latest version without manual copying
+- No external dependencies
+
+See [`docs/scripts.md`](docs/scripts.md) for full usage instructions, DOSBox
+configuration, and baud-rate alignment notes.
 
 ## Project layout
 
@@ -232,9 +284,13 @@ proxy/
     llm.py
     protocol.py
     requirements.txt
+scripts/
+    monitor_serial.sh
+    link_dosbox_project.sh
 docs/
     protocol.md
     build.md
+    scripts.md
 README.md
 AGENTS.md
 LICENSE

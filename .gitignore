@@ -17,8 +17,11 @@ out/
 # ==========================
 # Junie (JetBrains autonomous programmer) memory/config artifacts
 # ==========================
-# The .junie folder is used for session/config artifacts and should not be committed.
-.junie/
+# The .junie folder is used for session/config artifacts and should not be committed,
+# except for the repository guidelines bridge file.
+.junie/*
+!.junie/
+!.junie/guidelines.md
 
 # ==========================
 # OS & common editor cruft
