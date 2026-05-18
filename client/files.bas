@@ -28,16 +28,7 @@ SUB WriteFileFromAction (path$, body$)
 END SUB
 
 SUB RunDosCommand (cmd$)
-    UIAddLine "ACT", "RUN " + cmd$
-    UIAddLine "SYS", "Execute command? [Y/N]"
-    DO
-        k$ = UCASE$(INKEY$)
-    LOOP WHILE k$ <> "Y" AND k$ <> "N"
-    IF k$ = "Y" THEN
-        SHELL cmd$
-        UIAddLine "SYS", CHR$(251) + " command finished"
-    ELSE
-        UIAddLine "SYS", "command cancelled"
-    END IF
+    SHELL cmd$
+    UIAddLine "SYS", CHR$(251) + " command finished"
 END SUB
 

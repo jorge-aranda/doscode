@@ -11,10 +11,13 @@ DECLARE SUB StopProgram ()
 DECLARE SUB SetModel (newModel$)
 DECLARE FUNCTION ExtractPath$ (line$)
 DECLARE SUB ConfirmAndRun (cmd$)
+DECLARE FUNCTION IsTurnDone% ()
+DECLARE SUB ResetTurnDone ()
 
 DIM SHARED ActionMode$
 DIM SHARED ActionPath$
 DIM SHARED ActionBody$
+DIM SHARED TurnDone%
 
 SUB HandleServerLine (line$)
     IF line$ = "END" THEN EXIT SUB
@@ -102,6 +105,15 @@ SUB ConfirmAndRun (cmd$)
     ELSE
         UIAddLine "SYS", "RUN cancelled"
     END IF
+    TurnDone% = -1
+END SUB
+
+FUNCTION IsTurnDone% ()
+    IsTurnDone% = TurnDone%
+END FUNCTION
+
+SUB ResetTurnDone ()
+    TurnDone% = 0
 END SUB
 
 SUB ExecuteLocalCommand (cmd$)

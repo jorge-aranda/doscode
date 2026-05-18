@@ -15,6 +15,8 @@ DECLARE FUNCTION SerialIsReady% ()
 DECLARE FUNCTION SerialLastError% ()
 DECLARE SUB HandleServerLine (line$)
 DECLARE SUB ExecuteLocalCommand (cmd$)
+DECLARE FUNCTION IsTurnDone% ()
+DECLARE SUB ResetTurnDone ()
 DECLARE FUNCTION CurrentPath$ ()
 DECLARE SUB StopProgram ()
 DECLARE SUB SetModel (newModel$)
@@ -48,6 +50,7 @@ DO WHILE Running%
             ExecuteLocalCommand prompt$
         ELSE
             UIAddLine "YOU", prompt$
+            ResetTurnDone
             SerialSendPrompt prompt$
             DO
                 line$ = SerialReadLine$
@@ -63,6 +66,7 @@ DO WHILE Running%
                     LOOP
                     IF line$ = "END" THEN EXIT DO
                     HandleServerLine line$
+                    IF IsTurnDone% THEN EXIT DO
                 ELSE
                     k$ = INKEY$
                 END IF
