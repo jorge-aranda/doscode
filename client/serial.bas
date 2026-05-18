@@ -21,8 +21,14 @@ END SUB
 
 SUB SerialSendPrompt (prompt$)
     IF SerialReady% = 0 THEN EXIT SUB
-    PRINT #SerialFile%, "PROMPT"; STR$(LEN(prompt$))
-    PRINT #SerialFile%, prompt$
+    header$ = "PROMPT " + LTRIM$(STR$(LEN(prompt$))) + CHR$(13) + CHR$(10)
+    body$ = prompt$ + CHR$(13) + CHR$(10)
+    FOR i% = 1 TO LEN(header$)
+        PRINT #SerialFile%, MID$(header$, i%, 1);
+    NEXT i%
+    FOR i% = 1 TO LEN(body$)
+        PRINT #SerialFile%, MID$(body$, i%, 1);
+    NEXT i%
 END SUB
 
 FUNCTION SerialReadLine$
