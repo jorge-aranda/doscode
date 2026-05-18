@@ -10,6 +10,8 @@ DECLARE FUNCTION SerialLastError% ()
 DIM SHARED SerialFile%
 DIM SHARED SerialReady%
 DIM SHARED SerialError%
+DIM SHARED SerialBuffer$
+DIM SHARED SerialLineReady%
 
 SUB SerialOpen (portNum%)
     SerialFile% = FREEFILE
@@ -33,12 +35,16 @@ END SUB
 
 FUNCTION SerialReadLine$
     IF SerialReady% = 0 THEN SerialReadLine$ = "": EXIT FUNCTION
-    IF LOC(SerialFile%) > 0 THEN
-        LINE INPUT #SerialFile%, line$
-        SerialReadLine$ = line$
-    ELSE
-        SerialReadLine$ = ""
-    END IF
+    DO WHILE LOC(SerialFile%) > 0
+        ch$ = INPUT$(1, #SerialFile%)
+        IF ch$ = CHR$(10) THEN
+            SerialReadLine$ = SerialBuffer$
+            SerialBuffer$ = ""
+            EXIT FUNCTION
+        END IF
+        IF ch$ <> CHR$(13) THEN SerialBuffer$ = SerialBuffer$ + ch$
+    LOOP
+    SerialReadLine$ = ""
 END FUNCTION
 
 FUNCTION SerialIsReady% ()

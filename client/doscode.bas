@@ -52,8 +52,19 @@ DO WHILE Running%
             DO
                 line$ = SerialReadLine$
                 IF line$ <> "" THEN
-                    HandleServerLine line$
+                    ' Trim trailing CR/LF/space residue from serial buffer
+                    DO WHILE LEN(line$) > 0
+                        last$ = RIGHT$(line$, 1)
+                        IF last$ = CHR$(13) OR last$ = CHR$(10) OR last$ = " " THEN
+                            line$ = LEFT$(line$, LEN(line$) - 1)
+                        ELSE
+                            EXIT DO
+                        END IF
+                    LOOP
                     IF line$ = "END" THEN EXIT DO
+                    HandleServerLine line$
+                ELSE
+                    k$ = INKEY$
                 END IF
             LOOP
         END IF
