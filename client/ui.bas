@@ -57,8 +57,14 @@ END SUB
 
 SUB UISetStatus (model$, path$)
     COLOR CNormal%, 0
+    shownModel$ = LEFT$(model$, 18)
+    padModel% = 18 - LEN(shownModel$)
+    IF padModel% < 0 THEN padModel% = 0
+    shownPath$ = LEFT$(path$, 36)
+    padPath% = 36 - LEN(shownPath$)
+    IF padPath% < 0 THEN padPath% = 0
     LOCATE 2, 3
-    PRINT "model: "; model$; SPACE$(18 - LEN(model$)); " path: "; LEFT$(path$, 36); SPACE$(20);
+    PRINT "model: "; shownModel$; SPACE$(padModel%); " path: "; shownPath$; SPACE$(padPath%);
 END SUB
 
 SUB UIScrollIfNeeded ()

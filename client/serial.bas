@@ -15,7 +15,7 @@ SUB SerialOpen (portNum%)
     SerialFile% = FREEFILE
     SerialError% = 0
     port$ = "COM" + LTRIM$(STR$(portNum%)) + ":9600,N,8,1,CS0,DS0,CD0,RS"
-    OPEN port$ FOR RANDOM AS #SerialFile%
+    OPEN port$ FOR RANDOM AS #SerialFile% LEN = 1
     SerialReady% = -1
 END SUB
 
@@ -27,7 +27,7 @@ END SUB
 
 FUNCTION SerialReadLine$
     IF SerialReady% = 0 THEN SerialReadLine$ = "": EXIT FUNCTION
-    IF LOC(SerialFile%) >= 0 THEN
+    IF LOC(SerialFile%) > 0 THEN
         LINE INPUT #SerialFile%, line$
         SerialReadLine$ = line$
     ELSE

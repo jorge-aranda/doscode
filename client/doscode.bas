@@ -25,7 +25,7 @@ DIM SHARED PortNum%
 
 Running% = -1
 Model$ = ENVIRON$("LLM_MODEL")
-IF Model$ = "" THEN Model$ = "gpt-5.5"
+IF Model$ = "" THEN Model$ = "claude-3-5-haiku-20241022"
 PortNum% = 1
 
 UIInit
@@ -51,9 +51,10 @@ DO WHILE Running%
             SerialSendPrompt prompt$
             DO
                 line$ = SerialReadLine$
-                IF line$ = "" THEN EXIT DO
-                HandleServerLine line$
-                IF line$ = "END" THEN EXIT DO
+                IF line$ <> "" THEN
+                    HandleServerLine line$
+                    IF line$ = "END" THEN EXIT DO
+                END IF
             LOOP
         END IF
     END IF
