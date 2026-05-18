@@ -6,10 +6,11 @@ Helper scripts for development, debugging, and serial port monitoring.
 
 ## scripts/monitor_serial.sh
 
-Taps the serial traffic between the Python proxy and the DOSBox client in real
-time. It uses `socat` to create two linked PTYs and prints every byte that
-flows in each direction to the terminal, labelled with `[proxy->dos]` or
-`[dos->proxy]`. Traffic is also saved to separate log files.
+Taps the serial traffic between DOSBox and the Python proxy in real time. It
+replaces the plain `socat TCP-LISTEN:2323 <-> PTY` bridge of the validated
+setup with a `socat -v` tap that prints every byte in each direction to the
+terminal, labelled with `[proxy->dos]` or `[dos->proxy]`, and saves per-
+direction log files.
 
 ### Requirements
 
@@ -19,14 +20,14 @@ flows in each direction to the terminal, labelled with `[proxy->dos]` or
 ### Usage
 
 ```sh
-./scripts/monitor_serial.sh [PTY_PROXY] [PTY_DOSBOX] [LOG_DIR]
+./scripts/monitor_serial.sh [LISTEN_PORT] [PTY_PROXY] [LOG_DIR]
 ```
 
-| Argument    | Default                  | Description                                      |
-|-------------|--------------------------|--------------------------------------------------|
-| `PTY_PROXY` | `/tmp/pty_proxy`         | PTY passed to the proxy via `--serial-port`      |
-| `PTY_DOSBOX`| `/tmp/pty_dosbox`        | PTY configured in DOSBox as the serial port      |
-| `LOG_DIR`   | `/tmp/doscode_monitor`   | Directory where log files are written            |
+| Argument      | Default                  | Description                                                       |
+|---------------|--------------------------|-------------------------------------------------------------------|
+| `LISTEN_PORT` | `2323`                   | TCP port where DOSBox connects as `nullmodem` client              |
+| `PTY_PROXY`   | `/tmp/pty_proxy`         | PTY passed to the proxy via `--serial-port`                       |
+| `LOG_DIR`     | `/tmp/doscode_monitor`   | Directory where log files are written                             |
 
 Log files created:
 
@@ -35,36 +36,23 @@ Log files created:
 
 ### Typical workflow
 
-**Step 1 — Start the monitor** (creates the two PTYs):
+**Step 1 — Start the proxy** (against the PTY the script will create):
+
+```sh
+python3 proxy/server.py --serial-port /tmp/pty_proxy --baud 9600
+```
+
+**Step 2 — Start the monitor** (replaces the plain `socat` TCP↔PTY bridge):
 
 ```sh
 ./scripts/monitor_serial.sh
 ```
 
-The script prints the PTY paths and waits. Keep this terminal open.
+The script listens on TCP `2323`, exposes the proxy PTY at `/tmp/pty_proxy`,
+and prints every byte in each direction. Keep this terminal open.
 
-**Step 2 — Start the proxy** (in a second terminal):
-
-```sh
-python proxy/server.py --serial-port /tmp/pty_proxy
-```
-
-**Step 3 — Configure DOSBox** to connect to the proxy through a TCP nullmodem.
-
-The validated setup uses `socat` to expose the proxy PTY on a TCP port and
-configures DOSBox as a `nullmodem` TCP client. DOSBox `directserial realport:`
-against an arbitrary PTY path is **not** supported on macOS and unreliable on
-Linux; do not use it for this bridge.
-
-If you used `monitor_serial.sh`, it already creates the two linked PTYs for
-inspection. To let DOSBox reach the proxy through TCP instead, run a second
-`socat` that exposes one of those PTYs (or `/tmp/pty_proxy` directly) over TCP:
-
-```sh
-socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &
-```
-
-Then edit your DOSBox config file (e.g. `~/.dosbox/dosbox-staging.conf` or
+**Step 3 — Configure DOSBox** as a `nullmodem` TCP client. Edit your DOSBox
+config file (e.g. `~/.dosbox/dosbox-staging.conf` or
 `~/Library/Preferences/DOSBox/dosbox-staging.conf`) and set:
 
 ```ini
@@ -73,11 +61,8 @@ serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100
 serial2=dummy
 ```
 
-The proxy must then be started against the PTY side:
-
-```sh
-python3 proxy/server.py --serial-port /tmp/pty_proxy --baud 9600
-```
+DOSBox `directserial realport:` against an arbitrary PTY path is **not**
+supported on macOS and unreliable on Linux; do not use it for this bridge.
 
 **Step 4 — Start DOSBox** and run the DOS client inside it.
 
@@ -100,9 +85,13 @@ Make sure the baud rate matches on all three sides:
 | Side          | Setting                                                              |
 |---------------|----------------------------------------------------------------------|
 | DOSBox config | `serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100` |
-| socat         | `TCP-LISTEN:2323,reuseaddr,fork` linked to `/tmp/pty_proxy`          |
+| monitor_serial.sh | bridges `TCP-LISTEN:2323` ↔ `/tmp/pty_proxy` (replaces plain socat) |
 | Proxy         | `--serial-port /tmp/pty_proxy --baud 9600`                           |
 | DOS client    | `OPEN "COM1:9600,N,8,1,CD0,CS0,DS0,RS" AS #1`                        |
+
+Alternative without the monitor tap (plain `socat` bridge):
+
+- `socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &`
 
 ### Verifying COM1 inside DOSBox
 
