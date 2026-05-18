@@ -49,21 +49,34 @@ The script prints the PTY paths and waits. Keep this terminal open.
 python proxy/server.py --serial-port /tmp/pty_proxy
 ```
 
-**Step 3 — Configure DOSBox** to use `/tmp/pty_dosbox` as `COM1`.
+**Step 3 — Configure DOSBox** to connect to the proxy through a TCP nullmodem.
 
-Edit your DOSBox config file (e.g. `~/.dosbox/dosbox-staging.conf` or
+The validated setup uses `socat` to expose the proxy PTY on a TCP port and
+configures DOSBox as a `nullmodem` TCP client. DOSBox `directserial realport:`
+against an arbitrary PTY path is **not** supported on macOS and unreliable on
+Linux; do not use it for this bridge.
+
+If you used `monitor_serial.sh`, it already creates the two linked PTYs for
+inspection. To let DOSBox reach the proxy through TCP instead, run a second
+`socat` that exposes one of those PTYs (or `/tmp/pty_proxy` directly) over TCP:
+
+```sh
+socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &
+```
+
+Then edit your DOSBox config file (e.g. `~/.dosbox/dosbox-staging.conf` or
 `~/Library/Preferences/DOSBox/dosbox-staging.conf`) and set:
 
 ```ini
 [serial]
-serial1 = nullmodem server:/tmp/pty_dosbox
+serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100
+serial2=dummy
 ```
 
-Or with `directserial`:
+The proxy must then be started against the PTY side:
 
-```ini
-[serial]
-serial1 = directserial realport:/tmp/pty_dosbox
+```sh
+python3 proxy/server.py --serial-port /tmp/pty_proxy --baud 9600
 ```
 
 **Step 4 — Start DOSBox** and run the DOS client inside it.
@@ -84,11 +97,12 @@ Press `Ctrl+C` to stop monitoring.
 
 Make sure the baud rate matches on all three sides:
 
-| Side          | Setting                                              |
-|---------------|------------------------------------------------------|
-| DOSBox config | `serial1 = nullmodem server:/tmp/pty_dosbox`         |
-| Proxy         | `--baud 9600` (default)                              |
-| DOS client    | `OPEN "COM1:9600,N,8,1,CD0,CS0,DS0,RS" AS #1`       |
+| Side          | Setting                                                              |
+|---------------|----------------------------------------------------------------------|
+| DOSBox config | `serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100` |
+| socat         | `TCP-LISTEN:2323,reuseaddr,fork` linked to `/tmp/pty_proxy`          |
+| Proxy         | `--serial-port /tmp/pty_proxy --baud 9600`                           |
+| DOS client    | `OPEN "COM1:9600,N,8,1,CD0,CS0,DS0,RS" AS #1`                        |
 
 ### Verifying COM1 inside DOSBox
 

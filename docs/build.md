@@ -13,7 +13,7 @@ Run the proxy with a real serial port:
 ```sh
 cd proxy
 LLM_PROVIDER=openai \
-LLM_MODEL=gpt-5.5 \
+LLM_MODEL=gpt-4o-mini \
 LLM_API_KEY=your-key \
 SERIAL_PORT=/dev/ttyUSB0 \
 python3 server.py
@@ -24,7 +24,7 @@ On Windows:
 ```bat
 CD proxy
 SET LLM_PROVIDER=openai
-SET LLM_MODEL=gpt-5.5
+SET LLM_MODEL=gpt-4o-mini
 SET LLM_API_KEY=your-key
 SET SERIAL_PORT=COM3
 python server.py --serial-port %SERIAL_PORT%
@@ -44,7 +44,7 @@ All proxy configuration is done through environment variables:
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `LLM_PROVIDER` | no | `mock` | Provider: `openai`, `openrouter`, `claude`, `ollama`, or `mock` |
-| `LLM_MODEL` | no | `gpt-5.5` | Model name passed to the provider |
+| `LLM_MODEL` | no | per-provider default | Model name passed to the provider. Defaults: `gpt-4o-mini` (openai), `openai/gpt-4o-mini` (openrouter), `claude-3-5-haiku-20241022` (claude), `llama3.2` (ollama) |
 | `LLM_API_KEY` | see below | _(empty)_ | API key for cloud providers |
 | `LLM_BASE_URL` | no | _(provider default)_ | Override the provider API base URL |
 | `SERIAL_PORT` | no | _(none)_ | Serial device (e.g. `/dev/ttyUSB0`, `COM3`) or `stdio` for development |
@@ -181,7 +181,59 @@ RUN.BAT
 ## DOSBox serial example
 
 DOSBox can map a host serial device to a DOS `COM` port. Exact syntax depends
-on the DOSBox build and host OS. A common pattern is:
+on the DOSBox build and host OS.
+
+### Recommended: nullmodem over TCP + socat PTY bridge (macOS, Linux)
+
+This is the setup that has been validated end-to-end against the Python proxy.
+The idea is:
+
+```text
+DOS client  <--COM1-->  DOSBox (nullmodem TCP client)
+                              |
+                              v
+                       localhost:2323 (TCP)
+                              |
+                              v
+                       socat (TCP-LISTEN <-> PTY)
+                              |
+                              v
+                       /tmp/pty_proxy  <--->  python server.py
+```
+
+**Step 1.** Start the PTY ↔ TCP bridge with `socat`:
+
+```sh
+socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &
+```
+
+**Step 2.** Start the proxy pointing at the PTY:
+
+```sh
+cd proxy
+python3 server.py --serial-port /tmp/pty_proxy --baud 9600
+```
+
+**Step 3.** Configure DOSBox as a `nullmodem` TCP client in `dosbox.conf`:
+
+```ini
+[serial]
+serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100
+serial2=dummy
+```
+
+**Step 4.** Launch DOSBox and run the client. Inside DOS, the proxy is reachable
+through `COM1`.
+
+#### Why not `directserial realport:` with a PTY path
+
+`directserial realport:` expects a real host TTY device name, not an arbitrary
+PTY symlink. On macOS many DOSBox builds do not support `directserial` against
+host PTYs at all. The `nullmodem` + TCP approach above is portable and reliable.
+
+### Real serial hardware
+
+When you have a real serial cable/adapter, `directserial` is fine:
 
 ```ini
 serial1=directserial realport:COM3

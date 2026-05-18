@@ -77,7 +77,7 @@ The client targets an 80x25 text screen:
 
 ```text
 ┌ DOSCODE ───────────────────────────────────────────────────────────────────┐
-│ model: gpt-5.5        path: C:\WORK                                      │
+│ model: claude-3-5-haiku   path: C:\WORK                                   │
 ├────────────────────────────────────────────────────────────────────────────┤
 │ AI  > DOSCODE ready. Proxy expected on COM1. Press F1 for help.           │
 │ You > fix BUILD.BAT                                                       │
@@ -183,12 +183,15 @@ Environment variables:
 
 ```text
 LLM_PROVIDER=openai|claude|openrouter|ollama|mock
-LLM_MODEL=gpt-5.5
+LLM_MODEL=claude-3-5-haiku-20241022
 LLM_API_KEY=your-api-key
 LLM_BASE_URL=optional-compatible-base-url
-SERIAL_PORT=/dev/ttyUSB0 or COM3 or stdio
+SERIAL_PORT=/dev/ttyUSB0 or COM3 or stdio or /tmp/pty_proxy
 SERIAL_BAUD=9600
 ```
+
+If `LLM_MODEL` is not set, the proxy picks a sensible per-provider default
+(e.g. `claude-3-5-haiku-20241022` for `claude`, `gpt-4o-mini` for `openai`).
 
 For local development without serial hardware, use the mock provider and stdio:
 
@@ -203,6 +206,33 @@ Then type a protocol frame manually:
 PROMPT 15
 /read BUILD.BAT
 ```
+
+### Running with DOSBox on macOS / Linux
+
+DOSBox cannot open an arbitrary host PTY through `directserial realport:`.
+The validated setup uses `socat` to bridge a PTY to a TCP port and configures
+DOSBox as a `nullmodem` TCP client:
+
+```sh
+# Terminal 1 — PTY <-> TCP bridge
+socat -d -d pty,raw,echo=0,link=/tmp/pty_proxy TCP-LISTEN:2323,reuseaddr,fork &
+
+# Terminal 2 — proxy talks to the PTY
+cd proxy
+python3 server.py --serial-port /tmp/pty_proxy --baud 9600
+```
+
+In `dosbox.conf`:
+
+```ini
+[serial]
+serial1=nullmodem server:localhost port:2323 transparent:1 rxdelay:100
+serial2=dummy
+```
+
+The DOS client then talks to the proxy through `COM1`. See `docs/build.md`
+for details and `docs/scripts.md` for `monitor_serial.sh`, which can tap the
+traffic between DOSBox and the proxy.
 
 ## Building the DOS client
 
