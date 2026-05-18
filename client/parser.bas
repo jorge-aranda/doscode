@@ -10,6 +10,7 @@ DECLARE SUB SerialSendPrompt (prompt$)
 DECLARE SUB StopProgram ()
 DECLARE SUB SetModel (newModel$)
 DECLARE FUNCTION ExtractPath$ (line$)
+DECLARE SUB ConfirmAndRun (cmd$)
 
 DIM SHARED ActionMode$
 DIM SHARED ActionPath$
@@ -32,8 +33,13 @@ SUB HandleServerLine (line$)
     END IF
 
     IF ActionMode$ = "RUN" THEN
-        IF line$ = "</RUN>" THEN
-            RunDosCommand ActionBody$
+        closeIdx% = INSTR(line$, "</RUN>")
+        IF closeIdx% > 0 THEN
+            extra$ = LEFT$(line$, closeIdx% - 1)
+            IF LEN(extra$) > 0 THEN
+                IF ActionBody$ = "" THEN ActionBody$ = extra$ ELSE ActionBody$ = ActionBody$ + " " + extra$
+            END IF
+            ConfirmAndRun ActionBody$
             ActionMode$ = ""
             ActionBody$ = ""
         ELSE
@@ -53,9 +59,16 @@ SUB HandleServerLine (line$)
         ActionPath$ = p$
         ActionBody$ = ""
     ELSEIF LEFT$(line$, 5) = "<RUN>" THEN
-        UIAddLine "ACT", "RUN requested by model"
-        ActionMode$ = "RUN"
-        ActionBody$ = ""
+        rest$ = MID$(line$, 6)
+        closeIdx% = INSTR(rest$, "</RUN>")
+        IF closeIdx% > 0 THEN
+            cmd$ = LEFT$(rest$, closeIdx% - 1)
+            ConfirmAndRun cmd$
+        ELSE
+            UIAddLine "ACT", "RUN requested by model"
+            ActionMode$ = "RUN"
+            ActionBody$ = rest$
+        END IF
     ELSE
         UIAddLine "AI", line$
     END IF
@@ -73,6 +86,23 @@ FUNCTION ExtractPath$ (line$)
         IF a% > 0 AND b% > a% THEN ExtractPath$ = MID$(line$, a% + 1, b% - a% - 1) ELSE ExtractPath$ = ""
     END IF
 END FUNCTION
+
+SUB ConfirmAndRun (cmd$)
+    IF LEN(cmd$) = 0 THEN
+        UIAddLine "SYS", "RUN cancelled: empty command"
+        EXIT SUB
+    END IF
+    UIAddLine "ACT", "RUN: " + cmd$
+    UIAddLine "SYS", "Execute? press Y to confirm, any other key to cancel"
+    DO
+        k$ = INKEY$
+    LOOP WHILE k$ = ""
+    IF UCASE$(k$) = "Y" THEN
+        RunDosCommand cmd$
+    ELSE
+        UIAddLine "SYS", "RUN cancelled"
+    END IF
+END SUB
 
 SUB ExecuteLocalCommand (cmd$)
     c$ = LCASE$(cmd$)
