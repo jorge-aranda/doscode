@@ -23,9 +23,17 @@ Never emit complex JSON for the DOS client."""
 class LLMClient:
     """Small provider facade selected by `LLM_PROVIDER`."""
 
+    _DEFAULT_MODELS = {
+        "openai": "gpt-4o-mini",
+        "openrouter": "openai/gpt-4o-mini",
+        "claude": "claude-3-5-haiku-20241022",
+        "ollama": "llama3.2",
+    }
+
     def __init__(self) -> None:
         self.provider = os.getenv("LLM_PROVIDER", "mock").lower()
-        self.model = os.getenv("LLM_MODEL", "gpt-5.5")
+        default_model = self._DEFAULT_MODELS.get(self.provider, "gpt-4o-mini")
+        self.model = os.getenv("LLM_MODEL", default_model)
         self.api_key = os.getenv("LLM_API_KEY", "")
         self.base_url = os.getenv("LLM_BASE_URL", "")
 
@@ -82,7 +90,11 @@ class LLMClient:
         data = self._post_json(
             f"{base}/messages",
             payload,
-            extra_headers={"anthropic-version": "2023-06-01"},
+            auth=False,
+            extra_headers={
+                "anthropic-version": "2023-06-01",
+                "x-api-key": self.api_key,
+            },
         )
         text = "\n".join(part.get("text", "") for part in data.get("content", []) if part.get("type") == "text")
         yield from self._chunk_lines(text)
